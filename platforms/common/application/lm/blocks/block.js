@@ -79,7 +79,7 @@ var Block = new prime({
         if (!parent) { return; }
 
         var grandpa = parent.block.parent();
-        if (grandpa.data('lm-root') || (grandpa.data('lm-blocktype') == 'container' && grandpa.parent().data('lm-root'))) {
+        if (grandpa.data('lm-root') || (grandpa.data('lm-blocktype') == 'container' && (grandpa.parent().data('lm-root') || grandpa.parent().data('lm-blocktype') == 'wrapper'))) {
             zen('span.particle-size').text(this.getSize() + '%').top(element.block);
             element.on('resized', this.bound('onResize'));
         }
@@ -96,7 +96,7 @@ var Block = new prime({
         this.changeState = state;
 
         if (!child) {
-            child = this.block.find('> .particle-size');
+            child = this.block.find('> .particle-size') || this.block.parent('[data-lm-blocktype="block"]').find('> .particle-size');
             icon = child.find('i:first-child');
 
             if (!state && icon) { icon.remove(); }

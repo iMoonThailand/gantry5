@@ -1,6 +1,11 @@
 name: Menu
 description: Gantry menu
 type: particle
+icon: fa-bars
+
+configuration:
+  caching:
+    type: menu
 
 form:
   fields:
@@ -52,6 +57,12 @@ form:
       label: Render Titles
       description: Renders the titles/tooltips of the Menu Items for accessibility.
       default: 0
+
+    hoverExpand:
+      type: input.checkbox
+      label: Expand on Hover
+      description: Allows to enable / disable the ability to expand menu items by hover or click only
+      default: 1
 
     mobileTarget:
       type: input.checkbox

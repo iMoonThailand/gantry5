@@ -1,9 +1,8 @@
 <?php
-
 /**
  * @package   Gantry5
  * @author    RocketTheme http://www.rockettheme.com
- * @copyright Copyright (C) 2007 - 2015 RocketTheme, LLC
+ * @copyright Copyright (C) 2007 - 2017 RocketTheme, LLC
  * @license   Dual License: MIT or GNU/GPLv2 and later
  *
  * http://opensource.org/licenses/MIT
@@ -14,12 +13,10 @@
 
 namespace Gantry\Component\Stylesheet;
 
-use Gantry\Component\Filesystem\Folder;
-use Gantry\Component\Stylesheet\Scss\CompiledScssFile;
 use Gantry\Component\Stylesheet\Scss\Compiler;
-use Gantry\Framework\Base\Gantry;
+use Gantry\Framework\Gantry;
+use Leafo\ScssPhp\Exception\CompilerException;
 use RocketTheme\Toolbox\File\File;
-use RocketTheme\Toolbox\File\PhpFile;
 use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
 
 class ScssCompiler extends CssCompiler
@@ -73,6 +70,9 @@ class ScssCompiler extends CssCompiler
     {
         // Buy some extra time as compilation may take a lot of time in shared environments.
         @set_time_limit(30);
+        @set_time_limit(60);
+        @set_time_limit(90);
+        @set_time_limit(120);
         ob_start();
 
         $gantry = Gantry::instance();
@@ -103,7 +103,11 @@ class ScssCompiler extends CssCompiler
         // Run the compiler.
         $this->compiler->setVariables($this->getVariables());
         $scss = '@import "' . $in . '.scss"';
-        $css = $this->compiler->compile($scss);
+        try {
+            $css = $this->compiler->compile($scss);
+        } catch (CompilerException $e) {
+            throw new \RuntimeException("CSS Compilation on file '{$in}.scss' failed on error: {$e->getMessage()}", 500, $e);
+        }
         if (strpos($css, $scss) === 0) {
             $css = '/* ' . $scss . ' */';
         }
@@ -126,6 +130,8 @@ class ScssCompiler extends CssCompiler
  */
 WARN;
             $css = $warning . "\n\n" . $css;
+        } else {
+            $css = "{$this->checksum()}\n{$css}";
         }
 
         $file->save($css);
@@ -133,6 +139,7 @@ WARN;
         $file->free();
 
         $this->createMeta($out, md5($css));
+        $this->compiler->cleanParsedFiles();
 
         return true;
     }
@@ -160,8 +167,9 @@ WARN;
         return $this;
     }
 
-
     /**
+     * @param string $url
+     * @return null|string
      * @internal
      */
     public function findImport($url)
